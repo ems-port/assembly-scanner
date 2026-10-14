@@ -1,0 +1,40 @@
+#!/bin/bash
+# Assembly Scanner launcher: runs `.venv/bin/python -m app.main` from the repo.
+# The repo is found from Contents/Resources/repo_path (written by launcher/install.sh),
+# else from this bundle's own location when it is run in place from <repo>/launcher/.
+#
+# Installed copy: install.sh puts a copy of the framework's Python.app interpreter at
+# Contents/MacOS/python and signs the bundle. We exec THAT binary (same pid LaunchServices
+# started), with __PYVENV_LAUNCHER__ pointing at the repo venv's python (the same
+# mechanism the framework's bin/python3 stub uses). Then NSBundle.mainBundle is this
+# .app: menu bar "Assembly Scanner", its NSCameraUsageDescription, and TCC sees the
+# bundle id ai.polystage.assembly-scanner instead of org.python.python.
+# Uninstalled / in-repo copy: falls back to .venv/bin/python (menu shows "Python").
+
+BUNDLE="$(cd "$(dirname "$0")/../.." && pwd)"
+LOG="$HOME/Library/Logs/AssemblyScanner.log"
+mkdir -p "$(dirname "$LOG")"
+
+REPO=""
+if [ -f "$BUNDLE/Contents/Resources/repo_path" ]; then
+  REPO="$(head -n 1 "$BUNDLE/Contents/Resources/repo_path")"
+fi
+if [ -z "$REPO" ] || [ ! -d "$REPO/app" ]; then
+  REPO="$(cd "$BUNDLE/../.." 2>/dev/null && pwd)"
+fi
+PY="$REPO/.venv/bin/python"
+
+if [ ! -x "$PY" ] || [ ! -f "$REPO/app/main.py" ]; then
+  echo "$(date '+%F %T') launcher: repo or venv not found (repo='$REPO')" >> "$LOG"
+  /usr/bin/osascript -e 'display notification "Repo or .venv not found. Re-run launcher/install.sh from the repo." with title "Assembly Scanner"' >/dev/null 2>&1
+  exit 1
+fi
+
+cd "$REPO" || exit 1
+echo "$(date '+%F %T') launcher: starting from $REPO" >> "$LOG"
+EMBED="$BUNDLE/Contents/MacOS/python"
+if [ -x "$EMBED" ]; then
+  export __PYVENV_LAUNCHER__="$PY"
+  exec "$EMBED" -m app.main >> "$LOG" 2>&1
+fi
+exec "$PY" -m app.main >> "$LOG" 2>&1

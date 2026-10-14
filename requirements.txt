@@ -1,0 +1,9 @@
+opencv-python
+zxing-cpp
+openpyxl
+pillow
+pillow-heif
+PySide6
+pytest
+pyobjc-framework-Vision
+pyobjc-framework-AVFoundation
