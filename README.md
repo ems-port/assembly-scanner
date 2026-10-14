@@ -136,6 +136,8 @@ a Qt interface, and a Fusion MCP client. See [Architecture](docs/ARCHITECTURE.md
 component boundaries and operational behavior.
 
 Version history and the diagnostic summary are in [CHANGELOG.md](CHANGELOG.md).
+Possible future work is tracked in [ROADMAP.md](docs/ROADMAP.md); roadmap items are not
+implemented features.
 
 ## Limitations
 
